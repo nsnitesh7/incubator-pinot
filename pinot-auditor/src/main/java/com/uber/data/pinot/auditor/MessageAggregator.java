@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.uber.data.chaperone3.audit.TimeBucket;
-import com.uber.data.pinot.auditor.Entities.TimeBucketIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 public class MessageAggregator {
     private static final Logger logger = LoggerFactory.getLogger(MessageAggregator.class);
 
-    private final TimeBucketIdentifier timeBucketIdentifier;
     private final int timeBucketIntervalInSec;
 
     // use concurrent version because the map will be iterated from other threads
@@ -36,25 +34,15 @@ public class MessageAggregator {
     private final int reportFreqIntervalInMs;
 
     public MessageAggregator(
-            final TimeBucketIdentifier timeBucketIdentifier,
             final int timeBucketIntervalInSec,
             final int reportFreqBucketCount,
             final int reportFreqIntervalInMs) {
-        this.timeBucketIdentifier = timeBucketIdentifier;
         this.timeBucketIntervalInSec = timeBucketIntervalInSec;
 
         this.reportFreqBucketCount = reportFreqBucketCount;
         this.reportFreqIntervalInMs = reportFreqIntervalInMs;
 
         resetAggregator();
-    }
-
-    public String getTopicName() {
-        return timeBucketIdentifier.getTopicName();
-    }
-
-    public int getPartitionID() {
-        return timeBucketIdentifier.getPartitionID();
     }
 
     private void resetAggregator() {
@@ -103,18 +91,16 @@ public class MessageAggregator {
         // decide if time to report buckets
         if (timeBucketCount >= reportFreqBucketCount) {
             logger.debug(
-                    "FreqBucketCount is reached freqBucketCount={}, bucketCount={}, timeBucketIdentifier={}",
+                    "FreqBucketCount is reached freqBucketCount={}, bucketCount={}",
                     reportFreqBucketCount,
-                    timeBucketCount,
-                    timeBucketIdentifier.toString());
+                    timeBucketCount);
         }
 
         if (currentTimeInMs >= nextReportTimeInMs) {
             logger.debug(
-                    "FreqTimeInterval is reached currentTimeInMs={}, nextTimeInMs={}, timeBucketIdentifier={}",
+                    "FreqTimeInterval is reached currentTimeInMs={}, nextTimeInMs={}",
                     currentTimeInMs,
-                    nextReportTimeInMs,
-                    timeBucketIdentifier.toString());
+                    nextReportTimeInMs);
         }
 
         return timeBucketCount >= reportFreqBucketCount || currentTimeInMs >= nextReportTimeInMs;
@@ -133,8 +119,7 @@ public class MessageAggregator {
         timeBucket.trackInvalidCount(msgCount);
     }
 
-    public Collection<TimeBucket> getTimeBuckets(
-            final String auditHost, final String auditTier, boolean resetAggregator) {
+    public Collection<TimeBucket> getTimeBuckets() {
         Collection<TimeBucket> timeBuckets = timeBucketsMap.values();
         resetAggregator();
         return timeBuckets;
