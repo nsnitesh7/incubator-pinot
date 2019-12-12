@@ -1,4 +1,4 @@
-package com.uber.data.pinot.auditor;
+package com.uber.data.pinot.auditor.Interfaces;
 
 public interface IAuditor {
     void track(

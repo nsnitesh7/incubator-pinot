@@ -1,4 +1,4 @@
-package com.uber.data.pinot.auditor;
+package com.uber.data.pinot.auditor.Interfaces;
 
 import com.uber.data.chaperone3.audit.TimeBucket;
 import com.uber.data.pinot.auditor.Entities.TimeBucketIdentifier;
