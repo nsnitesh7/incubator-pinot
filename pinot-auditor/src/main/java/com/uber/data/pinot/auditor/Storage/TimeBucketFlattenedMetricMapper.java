@@ -1,6 +1,6 @@
 package com.uber.data.pinot.auditor.Storage;
 
-import com.uber.data.pinot.auditor.Constants;
+import com.uber.data.pinot.auditor.Utils.Constants;
 import com.uber.data.pinot.auditor.Entities.TimeBucketFlattenedMetric;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;

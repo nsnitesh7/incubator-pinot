@@ -1,4 +1,4 @@
-package com.uber.data.pinot.auditor;
+package com.uber.data.pinot.auditor.Utils;
 
 public final class Constants {
     public static final String DATABASE_URL = "jdbc:mysql://localhost:3306/pinot";

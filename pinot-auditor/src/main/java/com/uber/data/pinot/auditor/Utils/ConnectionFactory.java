@@ -1,14 +1,13 @@
-package com.uber.data.pinot.auditor;
+package com.uber.data.pinot.auditor.Utils;
 
 import com.uber.data.pinot.auditor.Entities.TimeBucketFlattenedMetric;
 import com.uber.data.pinot.auditor.Storage.TimeBucketMetricsDAO;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
-import static com.uber.data.pinot.auditor.Constants.*;
+import static com.uber.data.pinot.auditor.Utils.Constants.*;
 
 /**
  * Connect to Database
