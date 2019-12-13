@@ -15,6 +15,7 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
 
     private final IReporter reporter;
 
+    // only used for debugging in the auditor layer
     private final MessageAggregatorIdentifier messageAggregatorIdentifier;
     private final MessageAggregator messageAggregator;
     private final int timeBucketIntervalInSec;
@@ -58,7 +59,7 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
                     msgSizeInBytes);
 
             if (readyToReportAuditMsg) {
-                reporter.report(messageAggregatorIdentifier, messageAggregator.getTimeBuckets());
+                reporter.report(messageAggregator.getTimeBuckets());
             }
         } catch (Exception e) {
             logger.warn("Got exception to audit msg for topic={}", messageAggregatorIdentifier.toString(), e);
@@ -69,7 +70,7 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
     public void flushAllMetrics() {
         logger.info("Flush all audit metrics");
         if (messageAggregator.hasTimeBuckets()) {
-            reporter.report(messageAggregatorIdentifier, messageAggregator.getTimeBuckets());
+            reporter.report(messageAggregator.getTimeBuckets());
         }
     }
 
@@ -77,13 +78,13 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
     public void flushTimeoutMetrics() {
         logger.info("Flush timeout audit metrics");
         if (messageAggregator.isTimeoutToReport()) {
-            reporter.report(messageAggregatorIdentifier, messageAggregator.getTimeBuckets());
+            reporter.report(messageAggregator.getTimeBuckets());
         }
     }
 
     @Override
     public void close() throws IOException {
-        reporter.shutdown();
+//        reporter.shutdown();
     }
 
     public static class Builder {
@@ -96,10 +97,6 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
         private String topicName;
         private int partitionID;
         private int replicaID;
-
-        private int reportRequestTimeOutInMs = 60 * 1000;
-        private int reportWaitOnShutdownInMs = 60 * 1000;
-        private int reportMaxReportTaskQueueSize = 1024;
 
         public Builder timeBucketIntervalInSec(int timeBucketIntervalInSec) {
             this.timeBucketIntervalInSec = timeBucketIntervalInSec;
@@ -141,21 +138,6 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
             return this;
         }
 
-        public Builder reportRequestTimeout(int reportRequestTimeOutInMs) {
-            this.reportRequestTimeOutInMs = reportRequestTimeOutInMs;
-            return this;
-        }
-
-        public Builder reporterShutdownTimeout(int reportWaitOnShutdownInMs) {
-            this.reportWaitOnShutdownInMs = reportWaitOnShutdownInMs;
-            return this;
-        }
-
-        public Builder maxReportTaskQueueSize(int reportMaxReportTaskQueueSize) {
-            this.reportMaxReportTaskQueueSize = reportMaxReportTaskQueueSize;
-            return this;
-        }
-
         public PinotMessageAuditor build() {
             Preconditions.checkNotNull(tableName);
             Preconditions.checkNotNull(region);
@@ -164,10 +146,7 @@ public class PinotMessageAuditor implements Closeable, IAuditor {
             Preconditions.checkNotNull(replicaID);
             MetricsReporter reporter =
                     new MetricsReporter(
-                            reportRequestTimeOutInMs,
-                            reportWaitOnShutdownInMs,
-                            reportMaxReportTaskQueueSize);
-            reporter.start();
+                            new MessageAggregatorIdentifier(tableName, region, topicName, partitionID, replicaID));
             return new PinotMessageAuditor(tableName, region, topicName, partitionID, replicaID, reporter,
                     timeBucketIntervalInSec, reportFreqBucketCount, reportFreqIntervalInMs);
         }

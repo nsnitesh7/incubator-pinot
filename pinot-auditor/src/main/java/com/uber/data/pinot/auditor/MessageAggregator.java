@@ -38,7 +38,6 @@ public class MessageAggregator {
             final int reportFreqBucketCount,
             final int reportFreqIntervalInMs) {
         this.timeBucketIntervalInSec = timeBucketIntervalInSec;
-
         this.reportFreqBucketCount = reportFreqBucketCount;
         this.reportFreqIntervalInMs = reportFreqIntervalInMs;
 

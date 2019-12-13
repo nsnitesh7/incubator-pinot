@@ -8,8 +8,11 @@ public class TimeBucketFlattenedMetric implements Serializable {
     private String topicName;
     private int partitionID;
     private int replicaID;
+
+    // Not using offset fields for now
     private long startOffset;
     private long endOffset;
+
     private long startTimeSec;
     private long endTimeSec;
     private long totalCount;
