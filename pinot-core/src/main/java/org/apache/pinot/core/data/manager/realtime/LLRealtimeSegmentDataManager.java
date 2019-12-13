@@ -21,6 +21,7 @@ package org.apache.pinot.core.data.manager.realtime;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.uber.data.pinot.auditor.PinotMessageAuditor;
 import com.yammer.metrics.core.Meter;
 import java.io.File;
 import java.io.IOException;
@@ -345,6 +346,7 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
 
   protected boolean consumeLoop()
       throws Exception {
+    PinotMessageAuditor auditor = InitializePinotAuditor();
     _numRowsErrored = 0;
     final long idlePipeSleepTimeMillis = 100;
     final long maxIdleCountBeforeStatUpdate = (3 * 60 * 1000) / (idlePipeSleepTimeMillis + _partitionLevelStreamConfig
@@ -381,7 +383,7 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
         continue;
       }
 
-      processStreamEvents(messageBatch, idlePipeSleepTimeMillis);
+      processStreamEvents(messageBatch, idlePipeSleepTimeMillis, auditor);
 
       if (_currentOffset != lastUpdatedOffset) {
         consecutiveIdleCount = 0;
@@ -408,16 +410,30 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
     return true;
   }
 
-  private void processStreamEvents(MessageBatch messagesAndOffsets, long idlePipeSleepTimeMillis) {
+  private PinotMessageAuditor InitializePinotAuditor() {
+    return new PinotMessageAuditor.Builder()
+            .tableName("test_table")
+            .region("test_region")
+            .topicName("test_topic")
+            .partitionID(0)
+            .replicaID(0)
+            .build();
+  }
+
+  private void processStreamEvents(MessageBatch messagesAndOffsets, long idlePipeSleepTimeMillis, PinotMessageAuditor auditor) {
     Meter realtimeRowsConsumedMeter = null;
     Meter realtimeRowsDroppedMeter = null;
 
     int indexedMessageCount = 0;
     int streamMessageCount = 0;
+    int messagesSizeInBytes = 0;
     boolean canTakeMore = true;
 
     GenericRow reuse = new GenericRow();
     for (int index = 0; index < messagesAndOffsets.getMessageCount(); index++) {
+
+      messagesSizeInBytes += messagesAndOffsets.getMessageLengthAtIndex(index);
+
       if (_shouldStop || endCriteriaReached()) {
         break;
       }
@@ -481,6 +497,10 @@ public class LLRealtimeSegmentDataManager extends RealtimeSegmentDataManager {
       _numRowsConsumed++;
       streamMessageCount++;
     }
+
+    auditor.track(_currentOffset, System.currentTimeMillis() / 1000, streamMessageCount, messagesSizeInBytes);
+    auditor.flushAllMetrics();
+
     updateCurrentDocumentCountMetrics();
     if (streamMessageCount != 0) {
       segmentLogger.debug("Indexed {} messages ({} messages read from stream) current offset {}", indexedMessageCount,

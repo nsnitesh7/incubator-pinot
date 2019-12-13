@@ -1,7 +1,6 @@
 package com.uber.data.pinot.auditor;
 
 import com.uber.data.chaperone3.audit.TimeBucket;
-import com.uber.data.pinot.auditor.Entities.MessageAggregatorIdentifier;
 import com.uber.data.pinot.auditor.Interfaces.IReporter;
 import com.uber.data.pinot.auditor.PinotMessageAuditor.Builder;
 
